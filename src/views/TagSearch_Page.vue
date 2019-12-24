@@ -176,8 +176,10 @@ export default class App extends Vue {
   async fetchAndSaveItem(id: number) {
     this.infoList[id] = {}
     let _this = this
-    getSubjectInfo(id).then((data) => {      _this.$set(_this.infoList, id, data);
-      _this.$set(_this.infoChanged, id, Math.random());    }).catch(
+    getSubjectInfo(id).then((data) => {
+      _this.$set(_this.infoList, id, data);
+      _this.$set(_this.infoChanged, id, Math.random());
+    }).catch(
       () => { console.warn(`Fetch failed for #${id}`) }
     );
   }
