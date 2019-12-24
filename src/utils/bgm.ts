@@ -28,7 +28,6 @@ export async function getTagItems(tag: string): Promise<SimpleItem[]> {
 
 export async function getSubjectInfo(id: number): Promise<Object> {
   const resp = await axios.request({ url: `${API_SERVER}/api.bgm.tv/subject/${id}`, timeout: 5000 })
-  console.log(resp);
   return resp.data;
 }
 

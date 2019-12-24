@@ -46,6 +46,8 @@
             v-for="(item, index) in targetList"
             :key="index"
             :item="item"
+            v-bind:info-list-item="infoList[item.id]"
+            v-bind:info-changed="infoChanged[item.id]"
           >
           </TagCard>
         </div>
@@ -58,7 +60,7 @@
 import Vue from "vue";
 import Component from 'vue-class-component';
 import { Watch } from 'vue-property-decorator'
-import { getTagList, getTagItems } from "@/utils/bgm";
+import { getTagList, getTagItems, getSubjectInfo } from "@/utils/bgm";
 import { SimpleItem } from '@/utils/interfaces';
 import TagCard from '@/components/TagSearch_Card.vue';
 import difference from "lodash.difference";
@@ -89,6 +91,10 @@ export default class App extends Vue {
   targetList: SimpleResult[] = []
 
   addLoading = false
+
+  infoList: { [key: number]: object; } = {}
+
+  infoChanged: { [key: number]: number; } = {}
 
   async updateTagList() {
     this.addLoading = true;
@@ -138,12 +144,10 @@ export default class App extends Vue {
   }
 
   @Watch('checkedTags')
-  async updateTagsItem(newT: string[], oldT: string[]) {
-    // We don't update our tagsItemList on reduction
-    if (newT.length <= oldT.length) return;
-    const diff = difference(newT, oldT);
-    for (const i of diff) {
-      this.tagItemList[i] = await getTagItems(i)
+  async updateTagsItem(newT: string[]) {
+    for (const i of newT) {
+      if (this.tagItemList[i] == undefined)
+        this.tagItemList[i] = await getTagItems(i)
     }
     this.updateTargetList();
   }
@@ -157,6 +161,8 @@ export default class App extends Vue {
           ret[item.title] = Object.assign({
             hit: 1
           }, item)
+          if (this.infoList[item.id] === undefined)
+            this.fetchAndSaveItem(item.id);
         } else {
           ret[item.title].hit++;
         }
@@ -165,6 +171,15 @@ export default class App extends Vue {
     this.targetList = Object.values(ret).sort((a, b) => {
       return b.hit - a.hit;
     });
+  }
+
+  async fetchAndSaveItem(id: number) {
+    this.infoList[id] = {}
+    let _this = this
+    getSubjectInfo(id).then((data) => {      _this.$set(_this.infoList, id, data);
+      _this.$set(_this.infoChanged, id, Math.random());    }).catch(
+      () => { console.warn(`Fetch failed for #${id}`) }
+    );
   }
 
 }
