@@ -204,11 +204,18 @@ h1 {
     display: flex;
     font-size: 14px;
     position: relative;
+    align-items: center;
+  }
+
+  .checkboxBox {
+    flex-grow: 1;
+    .el-checkbox__label {
+      white-space: initial;
+    }
   }
 
   .ricon {
-    position: absolute;
-    right: 0;
+    margin-left: 10px;
     cursor: pointer;
     &:hover {
       color: #409eff;
@@ -217,7 +224,7 @@ h1 {
   .cntBadge {
     background-color: aquamarine;
     border-radius: 20%;
-    margin-left: 10px;
+    margin-left: 20px;
     padding: 2px 5px;
   }
 }
