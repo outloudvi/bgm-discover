@@ -60,7 +60,7 @@ import Vue from "vue";
 import Component from 'vue-class-component';
 import { Watch } from 'vue-property-decorator'
 import { getTagList, getTagItems, getSubjectInfo } from "@/utils/bgm";
-import { SimpleItem } from '@/utils/interfaces';
+import { SimpleItem, SimpleResult } from '@/utils/interfaces';
 import TagCard from '@/components/TagSearch_Card.vue';
 import difference from "lodash.difference";
 
@@ -69,9 +69,6 @@ interface tagItem {
   count: number;
 }
 
-interface SimpleResult extends SimpleItem {
-  hit: number;
-}
 
 @Component(
   {
@@ -233,5 +230,9 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+}
+
+.bgmOneItem {
+  margin-bottom: 10px;
 }
 </style>
