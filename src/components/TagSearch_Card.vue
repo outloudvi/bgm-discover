@@ -1,6 +1,6 @@
 <template>
   <el-card class="box-card">
-    {{ item.title }} ( {{ item.hit }} ) {{ infoListItem }} {{ infoChanegd }}
+    {{ item.title }} ( {{ item.hit }} ) {{ infoListItem }}
   </el-card>
 </template>
 
@@ -13,7 +13,6 @@ import { SimpleItem } from '@/utils/interfaces';
 export default class TagCard extends Vue {
   @Prop() private item!: SimpleItem;
   @Prop() private infoListItem!: object;
-  @Prop() private infoChanegd!: number;
 }
 </script>
 

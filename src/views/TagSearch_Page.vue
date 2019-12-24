@@ -47,7 +47,6 @@
             :key="index"
             :item="item"
             v-bind:info-list-item="infoList[item.id]"
-            v-bind:info-changed="infoChanged[item.id]"
           >
           </TagCard>
         </div>
@@ -146,8 +145,10 @@ export default class App extends Vue {
   @Watch('checkedTags')
   async updateTagsItem(newT: string[]) {
     for (const i of newT) {
-      if (this.tagItemList[i] == undefined)
-        this.tagItemList[i] = await getTagItems(i)
+      if (this.tagItemList[i] == undefined) {
+        let item = await getTagItems(i);
+        this.$set(this.tagItemList, i, item);
+      }
     }
     this.updateTargetList();
   }
@@ -174,11 +175,10 @@ export default class App extends Vue {
   }
 
   async fetchAndSaveItem(id: number) {
-    this.infoList[id] = {}
+    this.$set(this.infoList, id, {})
     let _this = this
     getSubjectInfo(id).then((data) => {
       _this.$set(_this.infoList, id, data);
-      _this.$set(_this.infoChanged, id, Math.random());
     }).catch(
       () => { console.warn(`Fetch failed for #${id}`) }
     );
