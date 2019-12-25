@@ -2,12 +2,30 @@
   <div>
     <h1>Bangumi - 发现频道</h1>
 
-    <el-row type="flex" justify="center">
-      <el-col :span="3">
-        <el-input
-          placeholder="Bangumi Item ID"
+    <el-row type="flex" justify="center" :gutter="5">
+      <el-col :span="6">
+        <el-select
+          class="elSelect"
           v-model="curAddingBgmId"
-        ></el-input>
+          filterable
+          remote
+          reserve-keyword
+          placeholder="keyword"
+          :remote-method="updateSearch"
+          :loading="searchLoading"
+        >
+          <el-option
+            v-for="item in searchOptions"
+            :key="item.id"
+            :label="item.name_cn || item.name"
+            :value="item.id"
+          >
+            <span style="float: left">{{ item.name_cn || item.name }}</span>
+            <span style="float: right; color: #8492a6; font-size: 13px">
+              {{ entityType[item.type] }} / #{{ item.id }}
+            </span>
+          </el-option>
+        </el-select>
       </el-col>
       <el-col :span="1">
         <el-button
@@ -59,8 +77,8 @@
 import Vue from "vue";
 import Component from 'vue-class-component';
 import { Watch } from 'vue-property-decorator'
-import { getTagList, getTagItems, getSubjectInfo } from "@/utils/bgm";
-import { SimpleItem, SimpleResult } from '@/utils/interfaces';
+import { getTagList, getTagItems, getSubjectInfo, getSearchResults } from "@/utils/bgm";
+import { SimpleItem, SimpleResult, EntityType } from '@/utils/interfaces';
 import TagCard from '@/components/TagSearch_Card.vue';
 import difference from "lodash.difference";
 
@@ -80,7 +98,7 @@ export default class App extends Vue {
 
   checkedTags: string[] = []
 
-  curAddingBgmId = 48031
+  curAddingBgmId: string | number = ""
 
   tagItemList: { [key: string]: SimpleItem[] } = {}
 
@@ -88,15 +106,22 @@ export default class App extends Vue {
 
   addLoading = false
 
+  searchLoading = false
+
   infoList: { [key: number]: object; } = {}
 
   infoChanged: { [key: number]: number; } = {}
 
+  searchOptions: object[] = [];
+
+  entityType = EntityType;
+
   async updateTagList() {
     this.addLoading = true;
     let tagList = [];
+    if (this.curAddingBgmId === "") return;
     try {
-      tagList = await getTagList(this.curAddingBgmId);
+      tagList = await getTagList(Number(this.curAddingBgmId));
     } catch (err) {
       this.addLoading = false;
       return;
@@ -181,6 +206,18 @@ export default class App extends Vue {
     );
   }
 
+  async updateSearch(query: string) {
+    if (query === "") return;
+    this.searchLoading = true;
+    try {
+      this.searchOptions = await getSearchResults(query).then(data => data.list);
+    } catch (err) {
+      console.warn("Search error:", err);
+    } finally {
+      this.searchLoading = false;
+    }
+  }
+
 }
 </script>
 
@@ -188,6 +225,10 @@ export default class App extends Vue {
 <style lang="scss" scoped>
 h1 {
   text-align: center;
+}
+
+.elSelect {
+  width: 100%;
 }
 
 #rowOpr {

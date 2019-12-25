@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { SimpleItem } from './interfaces';
+import { SearchResult, SimpleItem } from './interfaces';
 const API_SERVER = "http://172.17.0.2"
 
 const parser = new DOMParser();
@@ -31,6 +31,11 @@ export async function getSubjectInfo(id: number): Promise<Object> {
   return resp.data;
 }
 
+export async function getSearchResults(name: string, maxResults?: number): Promise<SearchResult> {
+  const resp = await axios.request({ url: `${API_SERVER}/api.bgm.tv/search/subject/${encodeURIComponent(name)}${maxResults ? '?max_results=' + maxResults : ""}`, timeout: 5000 })
+  return resp.data;
+}
+
 declare global {
   interface Window {
     bgm: any;
@@ -41,5 +46,6 @@ declare global {
 window.bgm = {
   getTagItems,
   getTagList,
-  getSubjectInfo
+  getSubjectInfo,
+  getSearchResults
 }
