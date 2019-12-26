@@ -12,10 +12,10 @@
           reserve-keyword
           placeholder="keyword"
           :remote-method="updateSearch"
-          :loading="searchLoading"
+          :loading="$store.state.searchLoading"
         >
           <el-option
-            v-for="item in searchOptions"
+            v-for="item in $store.state.searchSelection"
             :key="item.id"
             :label="item.name_cn || item.name"
             :value="item.id"
@@ -31,8 +31,8 @@
         <el-button
           type="primary"
           @click="updateTagList"
-          :loading="addLoading"
-          :disabled="addLoading"
+          :loading="$store.state.addLoading"
+          :disabled="$store.state.addLoading"
           >添加
         </el-button>
       </el-col>
@@ -41,17 +41,24 @@
     <el-row id="rowOpr" type="flex" justify="center" :gutter="20">
       <el-col :span="3">
         <el-checkbox-group class="checkboxGroup" v-model="checkedTags">
-          <div class="checkboxItem" v-for="obj in tagsSorted" :key="obj.name">
+          <div
+            class="checkboxItem"
+            v-for="obj in $store.getters.tagItemsSorted"
+            :key="obj.name"
+          >
             <el-checkbox class="checkboxBox" :label="obj.name">
               {{ obj.name }}
             </el-checkbox>
             <div class="cntBadge">{{ obj.count }}</div>
-            <i class="el-icon-delete ricon" @click="removeTag(obj.name)" />
+            <i
+              class="el-icon-delete ricon"
+              @click="$store.commit('rmTag', obj.name)"
+            />
           </div>
         </el-checkbox-group>
         <el-button
           id="btnClearTags"
-          v-show="tags.length > 0"
+          v-show="$store.getters.tagItemsSorted.length > 0"
           @click="clearTags"
           type="warning"
           >Clear</el-button
@@ -61,10 +68,10 @@
         <div id="bgmItemList">
           <TagCard
             class="bgmOneItem"
-            v-for="(item, index) in targetList"
+            v-for="(item, index) in $store.getters.targetList"
             :key="index"
             :item="item"
-            v-bind:info-list-item="infoList[item.id]"
+            v-bind:info-list-item="$store.state.itemDetails[item.id]"
           >
           </TagCard>
         </div>
@@ -76,146 +83,53 @@
 <script lang="ts">
 import Vue from "vue";
 import Component from 'vue-class-component';
-import { Watch } from 'vue-property-decorator'
-import { getTagList, getTagItems, getSubjectInfo, getSearchResults } from "@/utils/bgm";
-import { SimpleItem, SimpleResult, EntityType } from '@/utils/interfaces';
+import { Watch } from 'vue-property-decorator';
+import { SimpleResult, EntityType } from '@/utils/interfaces';
 import TagCard from '@/components/TagSearch_Card.vue';
-import difference from "lodash.difference";
 
-interface tagItem {
-  name: string;
-  count: number;
+declare global {
+  interface Window {
+    vueu: any;
+  }
 }
-
 
 @Component(
   {
-    components: { TagCard }
+    components: { TagCard },
   }
 )
 export default class App extends Vue {
-  tags: { [key: string]: number; } = {}
-
-  checkedTags: string[] = []
 
   curAddingBgmId: string | number = ""
 
-  tagItemList: { [key: string]: SimpleItem[] } = {}
-
-  targetList: SimpleResult[] = []
-
-  addLoading = false
-
-  searchLoading = false
-
-  infoList: { [key: number]: object; } = {}
-
-  infoChanged: { [key: number]: number; } = {}
-
-  searchOptions: object[] = [];
+  checkedTags: string[] = []
 
   entityType = EntityType;
 
-  async updateTagList() {
-    this.addLoading = true;
-    let tagList = [];
-    if (this.curAddingBgmId === "") return;
-    try {
-      tagList = await getTagList(Number(this.curAddingBgmId));
-    } catch (err) {
-      this.addLoading = false;
-      return;
-    }
-    for (const i of tagList) {
-      if (this.tags[i] === undefined) {
-        this.$set(this.tags, i, 1);
-      } else {
-        this.$set(this.tags, i, this.tags[i] + 1);
-      }
-    }
-    this.addLoading = false;
-  }
-
-  removeTag(name: string) {
-    this.$delete(this.checkedTags, this.checkedTags.indexOf(name));
-    this.$delete(this.tags, name);
-  }
-
-  get tagsSorted(): tagItem[] {
-    const ret: tagItem[] = [];
-    for (const key in this.tags) {
-      ret.push({
-        name: key,
-        count: this.tags[key]
-      })
-    }
-    return ret.sort((a, b) => {
-      if (a.count !== b.count) {
-        return b.count - a.count;
-      } else {
-        return a.name < b.name ? -1 : 1;
-      }
-    });
-  }
-
   clearTags() {
-    for (const key in this.tags) {
-      this.removeTag(key);
+    let tags = Array.from(this.$store.state.checkedTags);
+    for (const i of tags) {
+      this.$store.commit('uncheckTag', i);
     }
   }
 
   @Watch('checkedTags')
-  async updateTagsItem(newT: string[]) {
-    for (const i of newT) {
-      if (this.tagItemList[i] == undefined) {
-        let item = await getTagItems(i);
-        this.$set(this.tagItemList, i, item);
-      }
-    }
-    this.updateTargetList();
-  }
-
-  updateTargetList() {
+  updateTagsItem(newT: string[]) {
+    this.$store.dispatch('updateCheckedTags', newT);
     const ret: { [key: string]: SimpleResult } = {}
-    for (const tag of this.checkedTags) {
-      if (this.tagItemList[tag] === undefined) continue;
-      for (const item of this.tagItemList[tag]) {
-        if (ret[item.title] === undefined) {
-          ret[item.title] = Object.assign({
-            hit: 1
-          }, item)
-          if (this.infoList[item.id] === undefined)
-            this.fetchAndSaveItem(item.id);
-        } else {
-          ret[item.title].hit++;
-        }
+    for (const tag of this.$store.state.checkedTags) {
+      for (const item of this.$store.state.tagItems[tag]) {
+        this.$store.dispatch('fetchItem', item.id);
       }
     }
-    this.targetList = Object.values(ret).sort((a, b) => {
-      return b.hit - a.hit;
-    });
   }
 
-  async fetchAndSaveItem(id: number) {
-    this.$set(this.infoList, id, {})
-    let _this = this
-    getSubjectInfo(id).then((data) => {
-      _this.$set(_this.infoList, id, data);
-    }).catch(
-      () => { console.warn(`Fetch failed for #${id}`) }
-    );
+  updateTagList() {
+    this.$store.dispatch('addTagFromItem', this.curAddingBgmId);
   }
 
-  async updateSearch(query: string) {
-    if (query === "") return;
-    this.searchLoading = true;
-    try {
-      this.searchOptions = await getSearchResults(query).then(data => data.list);
-    } catch (err) {
-      console.warn("Search error:", err);
-    } finally {
-      this.searchLoading = false;
-    }
+  updateSearch(query: string) {
+    this.$store.dispatch("search", query);
   }
 
 }

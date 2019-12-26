@@ -19,3 +19,8 @@ export const EntityType = {
     4: "游戏",
     5: "现实人物"
 }
+
+export interface tagItem {
+    name: string;
+    count: number;
+  }

@@ -2,7 +2,7 @@
   <el-card class="box-card">
     <div slot="header" class="clearfix">
       <span>{{ item.title }}</span>
-      <small class="lMargin subtitle" v-if="infoListItem.id !== undefined">
+      <small class="lMargin subtitle" v-if="infoListItem && infoListItem.id">
         {{ infoListItem.name }}
       </small>
       <el-badge class="lMargin item" :value="hitCount"></el-badge>
@@ -10,7 +10,7 @@
         <a target="_blank" :href="url">Visit on Bangumi</a>
       </el-button>
     </div>
-    <div class="text item" v-if="infoListItem.id !== undefined">
+    <div class="text item" v-if="infoListItem && infoListItem.id">
       {{ infoListItem.summary }}
     </div>
   </el-card>
